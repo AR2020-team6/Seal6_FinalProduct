@@ -21,7 +21,7 @@ OpenCV opencv;
 
 import saito.objloader.*;
 OBJModel model;
-PShape blue;
+PShape blueEyes;
 
 // Variables for Homework 6 (2020/6/10)
 // **************************************************************
@@ -47,7 +47,7 @@ PVector ballPos;
 float ballAngle = 25;
 float ballspeed = 0;
 
-final int ballTotalFrame = 30;
+final int ballTotalFrame = 10;
 final float snowmanSize = 0.010;
 int frameCnt = 0;
 
@@ -85,7 +85,7 @@ void settings() {
     // Here we introduced a new test image in Lecture 6 (20/05/27)
     size(1280, 720, P3D);
     //opencv = new OpenCV(this, "./marker_test2.jpg");
-    opencv = new OpenCV(this, "./test.jpg");
+    opencv = new OpenCV(this, "./marker_test2.jpg");
     // size(1000, 730, P3D);
     // opencv = new OpenCV(this, "./marker_test.jpg");
   } else {
@@ -122,8 +122,11 @@ void setup() {
   // Added on Homework 6 (2020/6/10)
   ballPos = new PVector();  // ball position
   markerPoseMap = new HashMap<Integer, PMatrix3D>();  // hashmap (code, pose)
-
-  blue=loadShape("BlueEyes.obj");
+  
+  blueEyes = loadShape("BlueEyes/BlueEyes.obj");
+  blueEyes.scale(0.0005);
+  blueEyes.rotateX(3.14/2*3);
+  // blueEyes.rotateZ(0.5);
   // model = new OBJModel(this);
   //model = new OBJModel(this, "BlueEyes.obj", "absolute", TRIANGLES);
   
@@ -136,22 +139,6 @@ void setup() {
 
 
 void draw() {
-  background(100);
-  lights();
- 
-  translate(width/3, height/3, 0); 
-  //rotateX(QUARTER_PI * 1.0);            
-  rotateZ(-PI);
- 
-  rotateY(map(mouseX, mouseY, width, 2.5, -2.5));
-    //rotateY(ry);
-  pushMatrix();
-  translate(800,400,0);
-  shape(blue);
-  popMatrix();
-}
-/*
-
   ArrayList<Marker> markers = new ArrayList<Marker>();
   markerPoseMap.clear();
 
@@ -201,19 +188,28 @@ void draw() {
   for (int i = 0; i < 2; i++) {
     PMatrix3D pose_this = markerPoseMap.get(towardsList[i]);
     PMatrix3D pose_look = markerPoseMap.get(towardsList[(i+1)%2]);
+    println(pose_this);
 
     if (pose_this == null || pose_look == null)
       break;
 
     float angle = rotateToMarker(pose_this, pose_look, towardsList[i]);
 
+    
+    pushMatrix();
+      applyMatrix(pose_this);
+      rotateZ(angle-HALF_PI);
+      // rotateX(map(mouseX, mouseY, width, 2.5, -2.5));
+      // translate(0,0,-0.02);
+      shape(blueEyes);
+    popMatrix();
+
     pushMatrix();
       // apply matrix (cf. drawSnowman.pde)
       applyMatrix(pose_this);
       rotateZ(angle);
-
       // draw snowman
-      drawSnowman(snowmanSize);
+      //drawSnowman(snowmanSize);
 
       // move ball
       if (towardsList[i] == towards) {
@@ -233,10 +229,23 @@ void draw() {
           if (BALL_DEBUG)
             println(ballPos, tan(radians(ballAngle)) * ballPos.x,  z_quad);
 
-          translate(ballPos.x, ballPos.y, ballPos.z - 0.025);
-          noStroke();
-          fill(255, 0, 0);
-          sphere(0.003);
+          for (int b =0;b<100;b++){
+            pushMatrix();
+              float position = random(0,1);
+              translate(ballPos.x+position*0.01, ballPos.y+position*0.01, ballPos.z - 0.025+position*0.1);
+              noStroke();
+              float ballcolor = random(10, 70);
+              fill(255, ballcolor, 0);
+              box(0.001);
+            popMatrix();
+          }
+          pushMatrix();
+            translate(ballPos.x, ballPos.y, ballPos.z - 0.025);
+            noStroke();
+            fill(255, 255, 0);
+            sphere(0.003);
+          popMatrix();
+          
 
           if (frameCnt == ballTotalFrame) {
             ballPos = new PVector();
@@ -269,7 +278,7 @@ void draw() {
 
   System.gc();
 }
-*/
+
 
 void captureEvent(Capture c) {
   PGraphics3D g;
