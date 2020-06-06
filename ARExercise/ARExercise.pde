@@ -19,6 +19,10 @@ Capture cap;
 DCapture dcap;
 OpenCV opencv;
 
+import saito.objloader.*;
+OBJModel model;
+PShape blue;
+
 // Variables for Homework 6 (2020/6/10)
 // **************************************************************
 float fov = 45; // for camera capture
@@ -28,18 +32,23 @@ float fov = 45; // for camera capture
 // int towards = 0x1228; // the target marker that the ball flies towards
 int towardscnt = 0;   // if ball reached, +1 to change the target
 
-final int[] towardsList = {0x005A, 0x0272};
-int towards = 0x005A;
+//final int[] towardsList = {0x005A, 0x0272};
+// 0x1228 most right
+// 0x1c44  most left
+final int[] towardsList = {0x1c44, 0x1228};
+
+// int towards = 0x005A;
+int towards = 0x1c44;
 
 final float GA = 9.80665;
 
 PVector snowmanLookVector;
 PVector ballPos;
-float ballAngle = 45;
+float ballAngle = 25;
 float ballspeed = 0;
 
 final int ballTotalFrame = 30;
-final float snowmanSize = 0.020;
+final float snowmanSize = 0.010;
 int frameCnt = 0;
 
 HashMap<Integer, PMatrix3D> markerPoseMap;
@@ -75,7 +84,8 @@ void settings() {
   if (USE_SAMPLE_IMAGE) {
     // Here we introduced a new test image in Lecture 6 (20/05/27)
     size(1280, 720, P3D);
-    opencv = new OpenCV(this, "./marker_test2.jpg");
+    //opencv = new OpenCV(this, "./marker_test2.jpg");
+    opencv = new OpenCV(this, "./test.jpg");
     // size(1000, 730, P3D);
     // opencv = new OpenCV(this, "./marker_test.jpg");
   } else {
@@ -112,10 +122,36 @@ void setup() {
   // Added on Homework 6 (2020/6/10)
   ballPos = new PVector();  // ball position
   markerPoseMap = new HashMap<Integer, PMatrix3D>();  // hashmap (code, pose)
+
+  blue=loadShape("BlueEyes.obj");
+  // model = new OBJModel(this);
+  //model = new OBJModel(this, "BlueEyes.obj", "absolute", TRIANGLES);
+  
+  // model.enableDebug();
+  // model.load("BlueEyes.obj");
+  // model.scale(40);
+  // model.translateToCenter();
+  // model.setDrawMode(POLYGON);  
 }
 
 
 void draw() {
+  background(100);
+  lights();
+ 
+  translate(width/3, height/3, 0); 
+  //rotateX(QUARTER_PI * 1.0);            
+  rotateZ(-PI);
+ 
+  rotateY(map(mouseX, mouseY, width, 2.5, -2.5));
+    //rotateY(ry);
+  pushMatrix();
+  translate(800,400,0);
+  shape(blue);
+  popMatrix();
+}
+/*
+
   ArrayList<Marker> markers = new ArrayList<Marker>();
   markerPoseMap.clear();
 
@@ -156,6 +192,8 @@ void draw() {
   // for each marker, put (code, matrix) on hashmap 
   for (int i = 0; i < markers.size(); i++) {
     Marker m = markers.get(i);
+    println(m.code);
+    println(m.pose);
     markerPoseMap.put(m.code, m.pose);
   }
 
@@ -231,6 +269,7 @@ void draw() {
 
   System.gc();
 }
+*/
 
 void captureEvent(Capture c) {
   PGraphics3D g;
@@ -261,4 +300,3 @@ float rotateToMarker(PMatrix3D thisMarker, PMatrix3D lookAtMarker, int markernum
 
   return angle;
 }
-
