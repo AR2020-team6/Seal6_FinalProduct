@@ -126,15 +126,6 @@ void setup() {
   blueEyes = loadShape("BlueEyes/BlueEyes.obj");
   blueEyes.scale(0.0005);
   blueEyes.rotateX(3.14/2*3);
-  // blueEyes.rotateZ(0.5);
-  // model = new OBJModel(this);
-  //model = new OBJModel(this, "BlueEyes.obj", "absolute", TRIANGLES);
-  
-  // model.enableDebug();
-  // model.load("BlueEyes.obj");
-  // model.scale(40);
-  // model.translateToCenter();
-  // model.setDrawMode(POLYGON);  
 }
 
 
@@ -199,8 +190,6 @@ void draw() {
     pushMatrix();
       applyMatrix(pose_this);
       rotateZ(angle-HALF_PI);
-      // rotateX(map(mouseX, mouseY, width, 2.5, -2.5));
-      // translate(0,0,-0.02);
       shape(blueEyes);
     popMatrix();
 
