@@ -19,8 +19,6 @@ Capture cap;
 DCapture dcap;
 OpenCV opencv;
 
-import saito.objloader.*;
-OBJModel model;
 PShape blueEyes;
 
 // Variables for Homework 6 (2020/6/10)
