@@ -168,8 +168,6 @@ void draw() {
   // for each marker, put (code, matrix) on hashmap 
   for (int i = 0; i < markers.size(); i++) {
     Marker m = markers.get(i);
-    println(m.code);
-    println(m.pose);
     markerPoseMap.put(m.code, m.pose);
   }
 
@@ -177,7 +175,6 @@ void draw() {
   for (int i = 0; i < 2; i++) {
     PMatrix3D pose_this = markerPoseMap.get(towardsList[i]);
     PMatrix3D pose_look = markerPoseMap.get(towardsList[(i+1)%2]);
-    println(pose_this);
 
     if (pose_this == null || pose_look == null)
       break;
@@ -196,7 +193,7 @@ void draw() {
       applyMatrix(pose_this);
       rotateZ(angle);
       // draw snowman
-      //drawSnowman(snowmanSize);
+      // drawSnowman(snowmanSize);
 
       // move ball
       if (towardsList[i] == towards) {
@@ -216,16 +213,16 @@ void draw() {
           if (BALL_DEBUG)
             println(ballPos, tan(radians(ballAngle)) * ballPos.x,  z_quad);
 
-          for (int b =0;b<100;b++){
-            pushMatrix();
-              float position = random(0,1);
-              translate(ballPos.x+position*0.01, ballPos.y+position*0.01, ballPos.z - 0.025+position*0.1);
-              noStroke();
-              float ballcolor = random(10, 70);
-              fill(255, ballcolor, 0);
-              box(0.001);
-            popMatrix();
-          }
+          // for (int b =0;b<100;b++){
+          //   pushMatrix();
+          //     float position = random(0,1);
+          //     translate(ballPos.x+position*0.01, ballPos.y+position*0.01, ballPos.z - 0.025+position*0.1);
+          //     noStroke();
+          //     float ballcolor = random(10, 70);
+          //     fill(255, ballcolor, 0);
+          //     box(0.001);
+          //   popMatrix();
+          // }
           pushMatrix();
             translate(ballPos.x, ballPos.y, ballPos.z - 0.025);
             noStroke();
