@@ -40,6 +40,9 @@ int towards = 0x1c44;
 
 final float GA = 9.80665;
 
+float horizonPosition = 0.0;
+float verticalPosition = 0.0;
+
 PVector snowmanLookVector;
 PVector ballPos;
 float ballAngle = 25;
@@ -170,7 +173,10 @@ void draw() {
     Marker m = markers.get(i);
     markerPoseMap.put(m.code, m.pose);
   }
-
+  PMatrix3D aciton_right=markerPoseMap.get(0x005A);
+  if (aciton_right!=null){
+     verticalPosition+=0.005;
+  }
   // The snowmen face each other
   for (int i = 0; i < 2; i++) {
     PMatrix3D pose_this = markerPoseMap.get(towardsList[i]);
@@ -185,6 +191,7 @@ void draw() {
     pushMatrix();
       applyMatrix(pose_this);
       rotateZ(angle-HALF_PI);
+      translate(verticalPosition,horizonPosition,0);
       shape(blueEyes);
     popMatrix();
 

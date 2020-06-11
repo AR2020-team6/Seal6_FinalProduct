@@ -24,30 +24,47 @@ class KeyState {
   }
 
   void getKeyEvent() {
+    // if (getState(LEFT)) {
+    //   markerTracker.thresh -= 1;
+    // }
+
+    // if (getState(RIGHT)) {
+    //   markerTracker.thresh += 1;
+    // }
+
+    // if (getState(UP)) {
+    //   markerTracker.bw_thresh += 1;
+    // }
+
+    // if (getState(DOWN)) {
+    //   markerTracker.bw_thresh -= 1;
+    // }
     if (getState(LEFT)) {
-      markerTracker.thresh -= 1;
+      horizonPosition +=0.02;
     }
 
     if (getState(RIGHT)) {
-      markerTracker.thresh += 1;
+      horizonPosition -=0.02;
     }
 
     if (getState(UP)) {
-      markerTracker.bw_thresh += 1;
+      verticalPosition += 0.02;
     }
 
     if (getState(DOWN)) {
-      markerTracker.bw_thresh -= 1;
+      verticalPosition -= 0.02;
     }
 
     if (getState(90)) {
       if (ballTotalFrame > 1) {
-        ballTotalFrame -= 1;
+        //rightPosition =0.02;
+        //ballTotalFrame -= 1;
       }
     }
 
     if (getState(88)) {
-      ballTotalFrame += 1;
+      //rightPosition =-0.02;
+      //ballTotalFrame += 1;
     }
 
 
