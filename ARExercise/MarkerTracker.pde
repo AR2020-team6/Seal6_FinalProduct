@@ -530,6 +530,7 @@ class MarkerTracker {
             textSize(20);
             text("thresh : "    + thresh,    width-200, 50);
             text("bw_thresh : " + bw_thresh, width-200, 80);
+            text("ballTotalFrame : " + ballTotalFrame, width-200, 110);
         }
     }
 }

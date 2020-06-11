@@ -45,7 +45,7 @@ PVector ballPos;
 float ballAngle = 25;
 float ballspeed = 0;
 
-final int ballTotalFrame = 10;
+int ballTotalFrame = 10;
 final float snowmanSize = 0.010;
 int frameCnt = 0;
 
