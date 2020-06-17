@@ -28,20 +28,28 @@ class KeyState {
   }
 
   void getKeyEvent() {
+    down_key=false;
+    up_key=false;
+    right_key=false;
+    left_key=false;
     if (getState(LEFT)) {
-      markerTracker.thresh -= 1;
+      left_key=true;
+      //markerTracker.thresh -= 1;
     }
 
     if (getState(RIGHT)) {
-      markerTracker.thresh += 1;
+      right_key=true;
+      //markerTracker.thresh += 1;
     }
 
     if (getState(UP)) {
-      markerTracker.bw_thresh += 1;
+      up_key=true;
+      //markerTracker.bw_thresh += 1;
     }
 
     if (getState(DOWN)) {
-      markerTracker.bw_thresh -= 1;
+      down_key=true;
+      //markerTracker.bw_thresh -= 1;
     }
 
     if (getState(90)) {

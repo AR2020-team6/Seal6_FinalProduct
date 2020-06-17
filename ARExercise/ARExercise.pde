@@ -4,7 +4,7 @@ import java.util.Collections;
 
 final boolean MARKER_TRACKER_DEBUG = false;
 final boolean BALL_DEBUG = true;
-final boolean UFO_MOVE_DEBUG = true;
+final boolean UFO_MOVE_DEBUG = false;
 
 final boolean USE_SAMPLE_IMAGE = true;
 
@@ -15,7 +15,7 @@ final boolean USE_DIRECTSHOW = true;
 // HP Bar
 boolean LIFE_SYSTEM = false;
 boolean ALIVE = true;
-int HP = 3;
+int HP = 5;
 String HPstr = "■";
 
 // final double kMarkerSize = 0.036; // [m]
@@ -79,6 +79,14 @@ float DetectVectorLen = 0.0;
 int ballTotalFrame = 10;
 final float snowmanSize = 0.020;
 int frameCnt = 0;
+
+
+float Position_x=0;
+float Position_y=0;
+boolean right_key =false;
+boolean left_key =false;
+boolean up_key = false;
+boolean down_key = false;
 
 HashMap<Integer, PMatrix3D> markerPoseMap;
 
@@ -204,6 +212,24 @@ void draw() {
   for (int i = 0; i < markers.size(); i++) {
     Marker m = markers.get(i);
     markerPoseMap.put(m.code, m.pose);
+  }
+
+      // this is conrtol obj by using 3rd marker
+  PMatrix3D right = markerPoseMap.get(0x1228);
+  PMatrix3D left = markerPoseMap.get(0x1c44);
+  PMatrix3D up = markerPoseMap.get(0x0272);
+  PMatrix3D down = markerPoseMap.get(0x0272);
+  if (right!=null && right_key==true){
+      DronePositionX = -0.03;
+  }else if (left!=null && left_key==true){
+      DronePositionX = +0.03;
+  }else if (up!=null && up_key==true){
+      DronePositionY = -0.03;
+  }else if (down!=null && down_key==true){
+      DronePositionY = 0.03;
+  }else{
+    DronePositionY=0;
+    DronePositionX = 0;
   }
   
   // Adjusting the rotation
