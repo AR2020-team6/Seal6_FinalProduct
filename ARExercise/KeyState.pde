@@ -13,6 +13,10 @@ class KeyState {
     key.put(DOWN,  false);
     key.put(90, false);  // key z
     key.put(88, false);  // key x
+    key.put(87, false);  // key w
+    key.put(83, false);  // key s
+    key.put(65, false);  // key a
+    key.put(68, false);  // key d
   }
 
   void putState(int code, boolean state) {
@@ -48,6 +52,26 @@ class KeyState {
 
     if (getState(88)) {
       ballTotalFrame += 1;
+    }
+    
+    // w key
+    if (getState(87)) {
+      DronePositionY += 0.002;
+    }
+    
+    // s key
+    if (getState(83)) {
+      DronePositionY -= 0.002;
+    }
+    
+    // a key
+    if (getState(65)) {
+      DronePositionX += 0.002;
+    }
+    
+    // d key 
+    if (getState(68)) {
+      DronePositionX -= 0.002;
     }
 
 

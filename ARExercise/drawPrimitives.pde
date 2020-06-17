@@ -1,3 +1,4 @@
+// 鼻子的圆锥部
 void drawCylinder(float topRadius, float bottomRadius, float tall, int sides) {
   float angle = 0;
   float angleIncrement = TWO_PI / sides;
@@ -39,6 +40,7 @@ void drawCylinder(float topRadius, float bottomRadius, float tall, int sides) {
   }
 }
 
+// 绘制雪人
 void drawSnowman(float s) {
     pushMatrix();
       translate(0, 0, -s/2);

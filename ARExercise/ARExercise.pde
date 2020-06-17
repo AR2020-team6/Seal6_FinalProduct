@@ -1,8 +1,10 @@
 import gab.opencv.*;
 import processing.video.*;
+import java.util.Collections;
 
-final boolean MARKER_TRACKER_DEBUG = true;
+final boolean MARKER_TRACKER_DEBUG = false;
 final boolean BALL_DEBUG = true;
+final boolean UFO_MOVE_DEBUG = true;
 
 final boolean USE_SAMPLE_IMAGE = true;
 
@@ -10,7 +12,11 @@ final boolean USE_SAMPLE_IMAGE = true;
 // cannot work with processing.video.Capture.*.
 // Instead we use DirectShow Library to launch these cameras.
 final boolean USE_DIRECTSHOW = true;
-
+// HP Bar
+boolean LIFE_SYSTEM = false;
+boolean ALIVE = true;
+int HP = 3;
+String HPstr = "■";
 
 // final double kMarkerSize = 0.036; // [m]
 final double kMarkerSize = 0.024; // [m]
@@ -19,34 +25,59 @@ Capture cap;
 DCapture dcap;
 OpenCV opencv;
 
-PShape blueEyes;
-
-// Variables for Homework 6 (2020/6/10)
-// **************************************************************
 float fov = 45; // for camera capture
 
 // Marker codes to draw snowmans
-// final int[] towardsList = {0x1228, 0x0690};
-// int towards = 0x1228; // the target marker that the ball flies towards
+// 球传给谁
 int towardscnt = 0;   // if ball reached, +1 to change the target
 
-//final int[] towardsList = {0x005A, 0x0272};
-// 0x1228 most right
-// 0x1c44  most left
-final int[] towardsList = {0x1c44, 0x1228};
+// ※靶位
+final int[] towardsList = {0x1C44, 0x0272, 0x005A};
+int towards = 0x1C44;
 
-// int towards = 0x005A;
-int towards = 0x1c44;
 
+Particle p;
 final float GA = 9.80665;
 
 PVector snowmanLookVector;
 PVector ballPos;
-float ballAngle = 25;
+float ballAngle = 45;
 float ballspeed = 0;
 
+PShape UFOModel;
+float UFORotateSpeed = 3;
+float UFOHight = -0.02;
+float UFOHightSpeed = -0.0001; 
+float UFOPositionX = 0;
+float UFOPositionY = 0;
+float UFOMoveSpeed = 0.1;
+float t = 0.0; float dt = 0.05;
+int UFOTotalFrame = 360;
+int UFOframeCnt = 0;
+
+PShape DroneModel;
+float DronePositionX = 0;
+float DronePositionY = 0;
+float DroneMoveSpeed = 0.1;
+
+PShape blueEyes;
+boolean fire = false;
+boolean isFirst = true;
+float lifespan = 100;
+
+PShape flames;
+float RandomAngle = random(-0.4,0.4);
+PVector flameslocation;
+
+float flamesVectorLen = 0.0;
+// Target Position
+float TargetPositionX = 0.0;
+float TargetPositionY = 0.0;
+float DetectVectorLen = 0.0;
+
+// 帧率越小, 小球运动越快
 int ballTotalFrame = 10;
-final float snowmanSize = 0.010;
+final float snowmanSize = 0.020;
 int frameCnt = 0;
 
 HashMap<Integer, PMatrix3D> markerPoseMap;
@@ -82,7 +113,6 @@ void settings() {
   if (USE_SAMPLE_IMAGE) {
     // Here we introduced a new test image in Lecture 6 (20/05/27)
     size(1280, 720, P3D);
-    //opencv = new OpenCV(this, "./marker_test2.jpg");
     opencv = new OpenCV(this, "./marker_test2.jpg");
     // size(1000, 730, P3D);
     // opencv = new OpenCV(this, "./marker_test.jpg");
@@ -102,28 +132,38 @@ void settings() {
 void setup() {
   background(0);
   smooth();
-  // frameRate(10);
 
   markerTracker = new MarkerTracker(kMarkerSize);
 
   if (!USE_DIRECTSHOW)
     cap.start();
 
-  // Added on Homework 6 (2020/6/10)
   // Align the camera coordinate system with the world coordinate system
-  // (cf. drawSnowman.pde)
   PMatrix3D cameraMat = ((PGraphicsOpenGL)g).camera;
   cameraMat.reset();
 
   keyState = new KeyState();
 
-  // Added on Homework 6 (2020/6/10)
   ballPos = new PVector();  // ball position
+  ballPos.x = 0.05;
+  ballPos.z = 0.05;
   markerPoseMap = new HashMap<Integer, PMatrix3D>();  // hashmap (code, pose)
   
+  UFOModel = loadShape("UFO/UFO.obj");
+  UFOModel.scale(0.000015);
+  UFOModel.rotateX(PI);
+  
+  DroneModel = loadShape("Drone/Drone.obj");
+  DroneModel.scale(0.00005);
+  DroneModel.rotateX(PI);
+
   blueEyes = loadShape("BlueEyes/BlueEyes.obj");
   blueEyes.scale(0.0005);
-  blueEyes.rotateX(3.14/2*3);
+  blueEyes.rotateX(3*PI/2);
+
+  flames = loadShape("Flames/Flames.obj");
+  flames.scale(0.0005);
+  flames.rotateX(PI);
 }
 
 
@@ -144,10 +184,6 @@ void draw() {
     }
   }
 
-
-  // Your Code for Homework 6 (20/06/03) - Start
-  // **********************************************
-
   // use orthographic camera to draw images and debug lines
   // translate matrix to image center
   ortho();
@@ -160,7 +196,6 @@ void draw() {
   perspective(radians(fov), float(width)/float(height), 0.01, 1000.0);
 
   // setup light
-  // (cf. drawSnowman.pde)
   ambientLight(180, 180, 180);
   directionalLight(180, 150, 120, 0, 1, 0);
   lights();
@@ -170,99 +205,190 @@ void draw() {
     Marker m = markers.get(i);
     markerPoseMap.put(m.code, m.pose);
   }
+  
+  // Adjusting the rotation
+  if (UFOframeCnt >= UFOTotalFrame){
+    UFOframeCnt = 0;
+  }
+  
+  // Adjusting the height
+  if (UFOHight < -0.021 || UFOHight > -0.019){
+    UFOHightSpeed = -UFOHightSpeed;
+  }
+  
+  // UFO Position
+  PMatrix3D posit = markerPoseMap.get(towardsList[0]);
+  // Drone Position
+  PMatrix3D posit2 = markerPoseMap.get(towardsList[1]);
+  // BlueEyes Position
+  PMatrix3D posit3 = markerPoseMap.get(towardsList[2]);
+  // Rotate
+  boolean circularStart = false;
+  float angle = 0.0;
+  float MonsterAngle = 0.0;
 
-  // The snowmen face each other
-  for (int i = 0; i < 2; i++) {
-    PMatrix3D pose_this = markerPoseMap.get(towardsList[i]);
-    PMatrix3D pose_look = markerPoseMap.get(towardsList[(i+1)%2]);
-
-    if (pose_this == null || pose_look == null)
-      break;
-
-    float angle = rotateToMarker(pose_this, pose_look, towardsList[i]);
+  // if UFO and Monster
+  if (posit != null && posit3 != null){
+    angle = rotateToMarker(posit, posit3, towardsList[0]);
+  }
+  
+  // if Drone and Monster
+  if (posit2 != null && posit3 != null){
+    MonsterAngle = rotateToMarker(posit2, posit3, towardsList[1]);
+  }
 
     
-    pushMatrix();
-      applyMatrix(pose_this);
-      rotateZ(angle-HALF_PI);
-      shape(blueEyes);
-    popMatrix();
+  // UFO Model
+  pushMatrix();
 
-    pushMatrix();
-      // apply matrix (cf. drawSnowman.pde)
-      applyMatrix(pose_this);
+    if (posit != null){
+      applyMatrix(posit);
+      // Rotate
       rotateZ(angle);
-      // draw snowman
-      // drawSnowman(snowmanSize);
 
-      // move ball
-      if (towardsList[i] == towards) {
-        pushMatrix();
-          PVector relativeVector = new PVector();
-          relativeVector.x = pose_look.m03 - pose_this.m03;
-          relativeVector.y = pose_look.m13 - pose_this.m13;
-          float relativeLen = relativeVector.mag();
+      if (posit3 != null){
+        PVector MoveVector = new PVector();
+        MoveVector.x = posit3.m03 - posit.m03;
+        MoveVector.y = posit3.m13 - posit.m13;
+        float MoveVectorLen = MoveVector.mag();
 
-          ballspeed = sqrt(GA * relativeLen / sin(radians(ballAngle) * 2));
-          ballPos.x = frameCnt * relativeLen / ballTotalFrame;
+        if (UFO_MOVE_DEBUG){
+          // println("UFO Position(x, y)", posit.m03, posit.m13);
+          // Draw lines
+          noFill();
+          strokeWeight(4);
+          stroke(random(255), 0, 0);
+          line(0, 0, MoveVectorLen, 0); // line: UFO origin -> Monter origin (x1, y1, x2, y2) 
+          // println("UFOPosition", UFOPositionX, UFOPositionY);
+        }
 
-          float z_quad = GA * pow(ballPos.x, 2) / (2 * pow(ballspeed, 2) * pow(cos(radians(ballAngle)), 2));
-          ballPos.z = -tan(radians(ballAngle)) * ballPos.x + z_quad;
-          frameCnt++;
+        PVector TrueMoveVector = new PVector();
+        // TrueMoveVector.x = 0 - UFOPositionX;
+        // TrueMoveVector.y = MoveVectorLen - UFOPositionY;
+        
+        // Move Vector
+        TrueMoveVector.x = MoveVectorLen - UFOPositionX;
+        TrueMoveVector.y = 0 - UFOPositionY;
 
-          if (BALL_DEBUG)
-            println(ballPos, tan(radians(ballAngle)) * ballPos.x,  z_quad);
+        if (!circularStart && abs(UFOPositionX) < abs(0.5*MoveVectorLen)){
+          UFOPositionX += TrueMoveVector.x*UFOMoveSpeed;
+          UFOPositionY += TrueMoveVector.y*UFOMoveSpeed;
+        }
+        else{
+          circularStart = true;
+        }
 
-          // for (int b =0;b<100;b++){
-          //   pushMatrix();
-          //     float position = random(0,1);
-          //     translate(ballPos.x+position*0.01, ballPos.y+position*0.01, ballPos.z - 0.025+position*0.1);
-          //     noStroke();
-          //     float ballcolor = random(10, 70);
-          //     fill(255, ballcolor, 0);
-          //     box(0.001);
-          //   popMatrix();
-          // }
-          pushMatrix();
-            translate(ballPos.x, ballPos.y, ballPos.z - 0.025);
-            noStroke();
-            fill(255, 255, 0);
-            sphere(0.003);
-          popMatrix();
-          
+        if (circularStart){
+          t = t + dt;
+          // println("Time :", t);
+          // circular motion
+          UFOPositionX = MoveVectorLen - 0.5*MoveVectorLen*cos(t);
+          UFOPositionY = 0.5*MoveVectorLen*sin(t);
+        }
+        // println("Test:",MoveVector.x, MoveVector.y);
 
-          if (frameCnt == ballTotalFrame) {
-            ballPos = new PVector();
-            towardscnt++;
-            towards = towardsList[towardscnt % 2];
-            ballAngle = random(20, 70);
-            frameCnt = 0;
+      }
+    
+      pushMatrix();
+        translate(UFOPositionX, UFOPositionY, UFOHight);  // 高さ
 
-            if (BALL_DEBUG)
-              println("towards:", hex(towards));
-          }
-        popMatrix();
+        if (UFO_MOVE_DEBUG){
+          println("UFO Position(x, y)", UFOPositionX, UFOPositionY);
+        }
+
+        // Rotate
+        if (UFOframeCnt < UFOTotalFrame){
+          rotateZ(UFOframeCnt*UFORotateSpeed/UFOTotalFrame*2*PI);
+          shape(UFOModel);
+          UFOframeCnt += UFORotateSpeed;
+        }
+        UFOHight += UFOHightSpeed;
+      
+      popMatrix();
+    }
+  popMatrix();
+  
+
+  // Drone Model
+  pushMatrix();
+
+    if (posit2 != null){
+      LIFE_SYSTEM = true;
+      applyMatrix(posit2);
+
+      pushMatrix();
+        translate(DronePositionX, DronePositionY, 0);  // 高さ
+        if (ALIVE){
+          shape(DroneModel);
+        }
+      popMatrix();
+      
+    }
+
+  popMatrix();
+
+
+  // BlueEyes Model
+  pushMatrix();
+    
+    if (posit3 != null){
+      applyMatrix(posit3);
+      
+      fire = false;
+      if (posit2 != null ){
+        rotateZ(-MonsterAngle);
+        fire = true;
+        //////////////////////////////////////////////////////
+      
+        PVector DetectVector = new PVector();
+        DetectVector.x = posit3.m03 - posit2.m03;
+        DetectVector.y = posit3.m13 - posit2.m13;
+        DetectVectorLen = DetectVector.mag();
+
+        //////////////////////////////////////////////////////
       }
 
-      noFill();
-      strokeWeight(3);
-      stroke(255, 0, 0);
-      line(0, 0, 0, 0.02, 0, 0); // draw x-axis
-      stroke(0, 255, 0);
-      line(0, 0, 0, 0, 0.02, 0); // draw y-axis
-      stroke(0, 0, 255);
-      line(0, 0, 0, 0, 0, 0.02); // draw z-axis
-    popMatrix();
-  }
-  // Your Code for Homework 6 (20/06/03) - End
-  // **********************************************
+      shape(blueEyes);
+      // Dragon fire
+      if (fire){
+        // fire
+        rotateZ(MonsterAngle + RandomAngle);
+        if (isFirst){
+          p = new Particle(new PVector(0,0,0));
+          isFirst = false;
+        }
+        p.run();
+        flameslocation = p.getLocation();
+        flamesVectorLen = flameslocation.mag();
+        // Target Position
+        TargetPositionX = flamesVectorLen*sin(RandomAngle);
+        TargetPositionY = DetectVectorLen - flamesVectorLen*cos(RandomAngle);
+        
+        // println(DronePositionX, DronePositionY, TargetPositionX, TargetPositionY);
+        // Coordinate error range
+        if(sq(DronePositionX-TargetPositionX) + sq(DronePositionY - TargetPositionY) < 0.0002){
+          if (HP > 0){
+            HP -= 1;
+          }else{
+            ALIVE = false;
+          }
+        }
+
+        if (p.isDead()){
+          isFirst = true;
+          RandomAngle = random(-0.4, 0.4);
+        }
+        
+      }
+    }
+
+  popMatrix();
 
   noLights();
   keyState.getKeyEvent();
 
   System.gc();
 }
-
 
 void captureEvent(Capture c) {
   PGraphics3D g;
@@ -293,3 +419,4 @@ float rotateToMarker(PMatrix3D thisMarker, PMatrix3D lookAtMarker, int markernum
 
   return angle;
 }
+

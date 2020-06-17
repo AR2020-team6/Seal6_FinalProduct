@@ -39,7 +39,7 @@ class MarkerTracker {
 	Mat image_gray_filtered;
 
     MarkerTracker(double _kMarkerSizeLength) {
-        thresh = 80;
+        thresh = 105;
         bw_thresh = 100;
         kMarkerSizeLength = _kMarkerSizeLength;
         init();
@@ -531,6 +531,20 @@ class MarkerTracker {
             text("thresh : "    + thresh,    width-200, 50);
             text("bw_thresh : " + bw_thresh, width-200, 80);
             text("ballTotalFrame : " + ballTotalFrame, width-200, 110);
+        } 
+
+        if (LIFE_SYSTEM){
+            if (ALIVE){
+                fill(0, 0, 255);
+                textSize(30);
+                text("HP:" + String.join("", Collections.nCopies(HP, HPstr)) , width-200, 50);
+            }else{
+                fill(255, 0, 0);
+                textSize(30);
+                text("YOU ARE DEAD!", width-300, 50);
+            }
+            
         }
+
     }
 }
