@@ -11,6 +11,8 @@ class KeyState {
     key.put(LEFT,  false);
     key.put(UP,    false);
     key.put(DOWN,  false);
+    key.put(90, false);  // key z
+    key.put(88, false);  // key x
   }
 
   void putState(int code, boolean state) {
@@ -37,6 +39,18 @@ class KeyState {
     if (getState(DOWN)) {
       markerTracker.bw_thresh -= 1;
     }
+
+    if (getState(90)) {
+      if (ballTotalFrame > 1) {
+        ballTotalFrame -= 1;
+      }
+    }
+
+    if (getState(88)) {
+      ballTotalFrame += 1;
+    }
+
+
   }
 }
 
